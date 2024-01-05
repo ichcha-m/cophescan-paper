@@ -4,12 +4,11 @@ library(ggpubr)
 source("utils.R")
 
 #######################################################################
-path <- c(
-  "data/sim/mcmc_res_eff_300k/", "data/sim/mcmc_res_eff_300k/",
+path <- c("data/sim/mcmc_res_eff_300k/", "data/sim/mcmc_res_eff_300k/",
   "data/sim/mcmc_res_eff_1000k/", "data/sim/mcmc_res_eff_1000k/")
 iter <- c(300, 300, 1000, 1000)
 path <- paste0("data/sim/mcmc_res_eff_", iter, "k/")
-suff <-  c("res_sing_cophe_mcmc_norg_result", "res_sus_cophe_mcmc_norg_result",
+suff <- c("res_sing_cophe_mcmc_norg_result", "res_sus_cophe_mcmc_norg_result",
            "res_sing_cophe_mcmc_rg_result", "res_sus_cophe_mcmc_rg_result")
 
 #######################################################################
@@ -69,7 +68,8 @@ save(hc_res, file = "data/sim/mcmc_results/mcmc_res_eff_all_df_hc.RData")
 #######################################################################
 #### save observed and true counts of different hypotheses
 load("data/sim/mcmc_results/mcmc_res_eff_all_df.RData")
-processed_res <- return_processed_simres(cop_res_sim)
+processed_res <- return_processed_simres(cop_res_sim,
+  truth_vals = c("Hn", "Ha", "Ha2", "Hc", "Hc2"))
 save(processed_res, file = "data/sim/mcmc_results/processed_sim.RData")
 
 #######################################################################
@@ -80,8 +80,7 @@ hc_sub_list <- c(5000, 4000, 3000, 2000, 1000, 500, 200, 100, 50)
 
 for (hc_sub in hc_sub_list) {
   processed_res_hc <- return_processed_simres(hc_res[[as.character(hc_sub)]],
-    truth_vals = c("Hn", "Ha", "Hc")
-  )
+    truth_vals = c("Hn", "Ha", "Hc"))
   save(processed_res_hc,
     file = paste0(
       "data/sim/mcmc_results/processed_sim_hc_",
@@ -110,8 +109,9 @@ k <- sapply(seq_len(nrow(df)), function(x) {
 
 df <- cbind(df, t(k))
 colnames(df)[7:9] <- c("Hn", "Ha", "Hc")
-df <- df[, c(1:3, 7:9)]
-df <- tidyr::gather(df, Hypothesis, value,  -truth, -type, -total_truth)
+df <- tidyr::gather(
+  df, Hypothesis, value, -truth, -type, -total_truth,
+  -OHn, -OHa, -OHc)
 
 df$Hypothesis <- factor(df$Hypothesis,
   levels = c("Hn", "Ha", "Hc"))
@@ -142,7 +142,7 @@ p_df$rg[grep("With", p_df$`BF|Covariate`)] <-  "With.rg"
 p_df$BF[grep("ABF", p_df$`BF|Covariate`)] <- "ABF"
 p_df$BF[grep("SuSIE", p_df$`BF|Covariate`)] <- "SuSIE"
 p_df$value <- unlist(p_df$value)
-p_df$value_label <- round((p_df$value), 2)
+p_df$value_label <- round((as.numeric(p_df$value)), 2)
 p_df$value_label <- paste0(p_df$value_label, "%")
 p_df$value_label[which(gsub("2|True ", "", p_df$truth) !=
   p_df$Hypothesis)] <- NA
@@ -176,7 +176,9 @@ fig2b <- fig2b %>%
   mutate(total = Hc + notHc) %>%
   mutate(Assoc = (Hc / total) * 100) %>%
   mutate(notAssoc = (notHc / total) * 100)
-fig2b_melt <- reshape2::melt(fig2b[, c("type", "truth", "Assoc", "notAssoc")])
+fig2b_melt <- tidyr::gather(
+  fig2b, variable, value, -type, -truth, -total,
+  -Hc, -notHc)
 fig2b_melt <- fig2b_melt %>%
   mutate(variable = factor(variable, levels = c("notAssoc", "Assoc"))) %>%
   mutate(truth = factor(truth, levels = c("True Hn", "True Ha", "True Ha2",

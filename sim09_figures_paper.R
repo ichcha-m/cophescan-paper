@@ -69,7 +69,7 @@ g2b <- ggplot(fig2b_melt, aes(y = type, x = value, fill = variable)) +
   geom_text(aes(x = value, label = value_label, color = variable),
   hjust = 1.1, fontface = "bold", size = 5) +
   scale_color_manual(values = c("grey90", "grey30", "grey22"), guide = "none")
-
+## Combine using patchwork
 g2 <- g2a / g2b +
   plot_layout(heights = unit(c(12, 3.5), c("cm", "cm"))) +
   plot_layout(guides = "collect") &
@@ -80,6 +80,8 @@ ggsave("figures/final_figures/fig2ab.png",
   bg = "white", units = "in", dpi = 300)
 ggsave("figures/final_figures/fig2ab.pdf",
   width = 13, height = 10, bg = "white", units = "in")
+## Figure g2ab was further modified to create figure2 using inkscape to add 
+## the configuration of SNPs in the top panel.
 
 #######################################################################
 ### Main Figure 3

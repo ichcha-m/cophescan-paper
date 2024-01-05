@@ -81,63 +81,30 @@ return_processed_simres <- function(res_df_list, truth_vals) {
 
   for (idx in 1:6){
     df <- res_df_list[[res_df_names[idx]]]
-    ### prepare data to work with cran version of cophescan (Not required if all
-    ### processing done with the same version)
+    ### prepare data to work with cran version 1.3.2 of cophescan
+    ### (Not required if all processing done with the same version)
     df[, c("PP.Hn", "PP.Ha", "PP.Hc")] <- df[, c("Hn", "Ha", "Hc")]
-    df$querytrait = df$truth_grp
-    ret[[ret_names[idx]]] <- bind_rows(lapply(
-      truth_vals,
-      function(x) ret_counts_pred(df, out_labels[idx], truth = x)))
+    df$querytrait <- df$truth_grp
 
     ### Predict labels using cophescan
-    df_call= cophe.hyp.predict(df, grouping.vars = c("querysnp", "querytrait"))
+    df_call <- cophe.hyp.predict(df,
+      grouping.vars = c("querysnp", "querytrait"))
+    cont_mat <- as.data.frame.matrix(table(
+      df_call$truth, df_call$cophe.hyp.call))[truth_vals, c("Hn", "Ha", "Hc")]
+
+    ret[[ret_names[idx]]] <- data.frame(
+      type = out_labels[idx], truth = truth_vals,
+      total_truth = rowSums(cont_mat), OHn = cont_mat$Hn,
+      OHa = cont_mat$Ha, OHc = cont_mat$Hc)
 
     df_call[, c("PP.Hn", "PP.Ha", "PP.Hc")] <- NULL
-    colnames(df_call)[which(colnames(df_call)=="cophe.hyp.call")] <- "call"
+    colnames(df_call)[which(colnames(df_call) == "cophe.hyp.call")] <- "call"
 
-    ret_all[[ret_names_all[idx]]] = df_call
+    ret_all[[ret_names_all[idx]]] <- df_call
   }
 
   processed_result <- list(ret = ret, ret_all = ret_all)
   return(processed_result)
-}
-
-### counts for prediction corresponding to the truth
-ret_counts_pred <- function(df, type = "fixed_single", truth = "Hc",
- Hc.cutoff = 0.6) {
-  # print(paste0("Hc.cutoff = ", Hc.cutoff))
-  df <- df[which(gsub("_.*", "", df$truth) %in% truth), ]
-
-  df$call <- "Ha"
-  df$call[df$Hc >= Hc.cutoff] <- "Hc"
-  df$call[df$call != "Hc" & df$Hn > 0.2] <- "Hn"
-  df$call[!df$call %in% c("Hn", "Hc")] <- "Ha"
-
-  dfc <- df[df$call == "Hc", ]
-  dfc <- dfc %>% group_by(truth_grp) %>% filter(PP.Hc == max(PP.Hc))
-  dfc <- dfc[!duplicated(dfc$truth_grp), ]
-
-  dfa <- df[df$call == "Ha", ]
-  if (length(which(dfa$truth_grp %in% dfc$truth_grp)) > 0) {
-    dfa <- dfa[-which(dfa$truth_grp %in% dfc$truth_grp), ]
-  }
-  if (nrow(dfa > 0)) {
-    dfa <- dfa %>% group_by(truth_grp) %>% filter(PP.Ha == min(PP.Ha))
-    dfa <- dfa[!duplicated(dfa$truth_grp), ]
-  }
-  dfn <- df[df$call == "Hn", ]
-  if (nrow(dfn > 0)) {
-    dfn <- dfn %>% group_by(truth_grp) %>% filter(PP.Hn == max(PP.Hn))
-    dfn <- dfn[!duplicated(dfn$truth_grp), ]
-  }
-  if (length(which(dfn$grp %in% dfa$grp)) > 0) {
-    dfn <- dfn[-which(dfn$grp %in% dfa$grp), ]
-  }
-  if (length(which(dfn$grp %in% dfc$grp)) > 0) {
-    dfn <- dfn[-which(dfn$grp %in% dfc$grp), ]
-  }
-  return(data.frame(type = type, truth = truth, total_truth = (nrow(dfc) +
-    nrow(dfa) + nrow(dfn)), OHn = nrow(dfn), OHa = nrow(dfa), OHc = nrow(dfc)))
 }
 
 ### calculate prediction metrics
