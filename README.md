@@ -24,13 +24,13 @@ The R scripts needed to extract data from the summary statistics, process and ru
 
  - sim01_cophe_extract_lbf.R 
 
-    Summary statistics simulated using https://github.com/chr1swallace/cophescan-manuscript-sim-summary-data/ and available in figshare 
+    Summary statistics simulated using https://github.com/chr1swallace/cophescan-manuscript-sim-summary-data/ and available in figshare: *link coming soon*. 
 
     Process these files and extract log Bayes factors (SuSIE and ABF) using CoPheScan. 
 
  - sim02_collate_prepare_data_mcmc.R
  
-    Collate data from all files generated using sim01_cophe_extract_lbf.R as input to the hierarchical model. [The files files_for_sim.RData, sim_data.RData and sim_effect.RData (in sim_processed.tar.gz) are available in figshare]
+    Collate data from all files generated using sim01_cophe_extract_lbf.R as input to the hierarchical model. [The files files_for_sim.RData, sim_data.RData and sim_effect.RData (in sim_processed.tar.gz) are available in figshare (*link coming soon*)]
 
  - sim03_run_cophe_mcmc_full.R
         
